@@ -1,0 +1,1852 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema de Agendamento para Podologia</title>
+  <style>
+    :root {
+      --bg: #f5f5f7;
+      --bg-soft: rgba(255, 255, 255, 0.68);
+      --text: #1d1d1f;
+      --muted: #6e6e73;
+      --line: rgba(29, 29, 31, 0.08);
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.10);
+      --accent: #0a84ff;
+      --accent-2: #64d2ff;
+      --accent-3: #34c759;
+      --danger: #ff453a;
+      --radius-xl: 32px;
+      --radius-lg: 24px;
+      --radius-md: 18px;
+      --max: 1180px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(100, 210, 255, 0.35), transparent 28%),
+        radial-gradient(circle at top right, rgba(10, 132, 255, 0.16), transparent 25%),
+        radial-gradient(circle at 50% 10%, rgba(52, 199, 89, 0.12), transparent 20%),
+        linear-gradient(180deg, #ffffff 0%, #f5f5f7 30%, #efeff2 100%);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image: linear-gradient(rgba(255,255,255,0.38) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(255,255,255,0.38) 1px, transparent 1px);
+      background-size: 90px 90px;
+      opacity: 0.12;
+      mask-image: radial-gradient(circle at center, black 55%, transparent 100%);
+    }
+
+    .wrap {
+      width: min(var(--max), calc(100% - 32px));
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(24px);
+      background: rgba(245, 245, 247, 0.72);
+      border-bottom: 1px solid rgba(29, 29, 31, 0.06);
+    }
+
+    .topbar .wrap {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 0;
+      gap: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: linear-gradient(145deg, #111318, #2a2d34);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 12px 24px rgba(0,0,0,0.18);
+      position: relative;
+    }
+
+    .brand-mark::after {
+      content: "";
+      position: absolute;
+      inset: 10px;
+      border-radius: 8px;
+      background: linear-gradient(145deg, #64d2ff, #0a84ff);
+      box-shadow: 0 0 30px rgba(10,132,255,0.35);
+    }
+
+    .mini-link {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.95rem;
+    }
+
+    .nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .nav a {
+      text-decoration: none;
+      color: var(--muted);
+      font-size: .92rem;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      transition: .22s ease;
+      background: rgba(255,255,255,0.0);
+    }
+
+    .nav a:hover {
+      color: var(--text);
+      background: rgba(255,255,255,0.7);
+      border-color: rgba(29,29,31,0.06);
+    }
+
+    .nav a.active {
+      color: var(--text);
+      background: rgba(255,255,255,0.82);
+      border-color: rgba(29,29,31,0.06);
+      box-shadow: 0 10px 24px rgba(0,0,0,0.05);
+    }
+
+    .hero {
+      padding: 88px 0 44px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1fr 0.92fr;
+      gap: 42px;
+      align-items: center;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      border: 1px solid rgba(10, 132, 255, 0.15);
+      background: rgba(255,255,255,0.72);
+      border-radius: 999px;
+      color: #0f3d67;
+      font-size: 0.92rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+      animation: floatIn 0.9s ease both;
+    }
+
+    .hero h1 {
+      margin: 22px 0 18px;
+      font-size: clamp(3.25rem, 6.8vw, 6.4rem);
+      line-height: 0.95;
+      letter-spacing: -0.07em;
+      max-width: 11ch;
+      animation: rise 0.9s ease 0.1s both;
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(1.12rem, 2vw, 1.42rem);
+      line-height: 1.55;
+      max-width: 50ch;
+      animation: rise 0.9s ease 0.2s both;
+    }
+
+    .hero-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 18px;
+      padding: 12px 16px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.06);
+      color: #0f172a;
+      font-weight: 600;
+      font-size: .92rem;
+    }
+
+    .actions {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-top: 30px;
+      animation: rise 0.9s ease 0.3s both;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 15px 24px;
+      border-radius: 999px;
+      text-decoration: none;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      transition: transform .25s ease, box-shadow .25s ease, background .25s ease;
+      will-change: transform;
+    }
+
+    .btn:hover { transform: translateY(-2px) scale(1.01); }
+
+    .btn.primary {
+      background: linear-gradient(135deg, #0a84ff, #64d2ff);
+      color: white;
+      box-shadow: 0 18px 36px rgba(10,132,255,0.28);
+    }
+
+    .btn.secondary {
+      background: rgba(255,255,255,0.72);
+      color: var(--text);
+      border: 1px solid var(--line);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+    }
+
+    .hero-card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,0.72));
+      border: 1px solid rgba(255,255,255,0.86);
+      border-radius: 46px;
+      box-shadow: 0 30px 100px rgba(0,0,0,0.12);
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+      animation: floatIn 1s ease 0.2s both;
+    }
+
+    .hero-card::before {
+      content: "";
+      position: absolute;
+      inset: -30% -20% auto auto;
+      width: 240px;
+      height: 240px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(100,210,255,0.38), transparent 65%);
+      filter: blur(8px);
+    }
+
+    .phone {
+      border-radius: 30px;
+      background: linear-gradient(180deg, #0e1220, #111827);
+      padding: 16px;
+      color: white;
+      min-height: 560px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .showcase-row {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 18px;
+      margin-top: 14px;
+    }
+
+    .showcase-card {
+      background: rgba(255,255,255,0.72);
+      border: 1px solid rgba(29,29,31,0.06);
+      border-radius: 26px;
+      padding: 20px;
+      box-shadow: 0 16px 34px rgba(0,0,0,0.06);
+    }
+
+    .showcase-card h3 {
+      margin: 0 0 8px;
+      font-size: 1.1rem;
+      letter-spacing: -0.03em;
+    }
+
+    .showcase-card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: .95rem;
+    }
+
+    .hero-visual {
+      border-radius: 28px;
+      overflow: hidden;
+      margin-bottom: 14px;
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+
+    .hero-visual svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .hero-foot {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .hero-foot .mini {
+      background: rgba(255,255,255,0.72);
+      border: 1px solid rgba(29,29,31,0.06);
+      border-radius: 20px;
+      padding: 16px;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.05);
+    }
+
+    .hero-foot .mini strong {
+      display: block;
+      font-size: 1.2rem;
+      letter-spacing: -0.03em;
+      margin-bottom: 4px;
+    }
+
+    .hero-foot .mini span {
+      color: var(--muted);
+      font-size: .92rem;
+      line-height: 1.45;
+    }
+
+    .phone-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: .82rem;
+      color: rgba(255,255,255,.72);
+      margin-bottom: 18px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 11px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.10);
+      font-size: .82rem;
+    }
+
+    .mock-panel {
+      background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 24px;
+      padding: 18px;
+      margin-top: 14px;
+    }
+
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .day, .slot {
+      height: 42px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255,255,255,0.80);
+      font-size: 0.86rem;
+    }
+
+    .slot.active {
+      background: linear-gradient(135deg, rgba(100,210,255,0.95), rgba(10,132,255,0.95));
+      color: white;
+      box-shadow: 0 10px 24px rgba(10,132,255,0.35);
+    }
+
+    .stack {
+      display: grid;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .mini-card {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 18px;
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .stat-card {
+      padding: 24px;
+    }
+
+    .stat-number {
+      font-size: clamp(2rem, 5vw, 3.6rem);
+      letter-spacing: -0.06em;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .stat-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(10,132,255,0.08);
+      color: #0f3d67;
+      font-size: .84rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .screen-tabs {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 18px 0 22px;
+    }
+
+    .screen-tab {
+      border: 0;
+      cursor: pointer;
+      padding: 11px 16px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.74);
+      color: var(--muted);
+      font-weight: 600;
+      transition: .2s ease;
+      border: 1px solid rgba(29,29,31,0.06);
+    }
+
+    .screen-tab.active {
+      color: white;
+      background: linear-gradient(135deg, #0a84ff, #64d2ff);
+      box-shadow: 0 12px 24px rgba(10,132,255,0.22);
+    }
+
+    .screen-panel {
+      display: none;
+    }
+
+    .screen-panel.active {
+      display: block;
+    }
+
+    .ui-frame {
+      border-radius: 30px;
+      overflow: hidden;
+      background: linear-gradient(180deg, #111318, #1a1d24);
+      box-shadow: 0 30px 70px rgba(0,0,0,0.18);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .ui-frame .chrome {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 16px;
+      color: rgba(255,255,255,0.72);
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      font-size: .9rem;
+    }
+
+    .ui-frame .content {
+      padding: 18px;
+      color: white;
+    }
+
+    .screen-shell {
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      min-height: 560px;
+      background: linear-gradient(180deg, #0d1220 0%, #101727 100%);
+    }
+
+    .screen-side {
+      padding: 18px 16px;
+      border-right: 1px solid rgba(255,255,255,0.06);
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .side-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 6px 4px 14px;
+    }
+
+    .side-logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #0a84ff, #64d2ff);
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      color: white;
+      box-shadow: 0 16px 28px rgba(10,132,255,0.3);
+    }
+
+    .side-brand strong {
+      display: block;
+      font-size: .98rem;
+      letter-spacing: -0.03em;
+    }
+
+    .side-brand span {
+      display: block;
+      font-size: .83rem;
+      color: rgba(255,255,255,0.58);
+      margin-top: 2px;
+    }
+
+    .side-section {
+      display: grid;
+      gap: 8px;
+    }
+
+    .side-label {
+      color: rgba(255,255,255,0.42);
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      padding: 0 8px;
+    }
+
+    .side-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 12px;
+      border-radius: 14px;
+      color: rgba(255,255,255,0.88);
+      background: transparent;
+      border: 1px solid transparent;
+      font-weight: 600;
+    }
+
+    .side-item.active {
+      background: rgba(255,255,255,0.07);
+      border-color: rgba(255,255,255,0.09);
+      box-shadow: inset 3px 0 0 #0a84ff;
+    }
+
+    .side-footer {
+      margin-top: auto;
+      display: grid;
+      gap: 10px;
+    }
+
+    .side-btn {
+      border-radius: 14px;
+      padding: 13px 14px;
+      text-align: center;
+      font-weight: 700;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .side-btn.primary {
+      background: rgba(255,255,255,0.05);
+      color: #fff;
+    }
+
+    .side-btn.danger {
+      background: linear-gradient(135deg, rgba(255,69,58,0.14), rgba(255,255,255,0.06));
+      color: #ffb8b3;
+    }
+
+    .screen-main {
+      padding: 22px;
+      background:
+        radial-gradient(circle at top right, rgba(100,210,255,0.08), transparent 20%),
+        linear-gradient(180deg, #f7f8fc 0%, #eef2f8 100%);
+      color: #111827;
+    }
+
+    .main-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .main-top .eyeline {
+      color: #4f76a7;
+      font-size: .92rem;
+      margin-bottom: 8px;
+    }
+
+    .main-top h3 {
+      margin: 0;
+      font-size: 1.65rem;
+      letter-spacing: -0.04em;
+      color: #0f172a;
+    }
+
+    .main-top p {
+      margin: 10px 0 0;
+      color: #5b6475;
+      line-height: 1.5;
+    }
+
+    .action-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .mini-action {
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-weight: 700;
+      background: white;
+      color: #0f172a;
+      box-shadow: 0 10px 20px rgba(15,23,42,0.08);
+      border: 1px solid rgba(15,23,42,0.06);
+    }
+
+    .mini-action.primary {
+      background: linear-gradient(135deg, #0a84ff, #1d9fff);
+      color: white;
+      box-shadow: 0 14px 28px rgba(10,132,255,0.22);
+    }
+
+    .panel-grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .panel-grid.two {
+      grid-template-columns: 1.25fr 0.75fr;
+    }
+
+    .panel-grid.three {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .white-card {
+      background: rgba(255,255,255,0.86);
+      border: 1px solid rgba(15,23,42,0.08);
+      border-radius: 22px;
+      padding: 18px;
+      box-shadow: 0 16px 38px rgba(15,23,42,0.06);
+    }
+
+    .white-card h4 {
+      margin: 0 0 6px;
+      font-size: 1rem;
+      color: #0f172a;
+      letter-spacing: -0.02em;
+    }
+
+    .white-card .sub {
+      color: #64748b;
+      font-size: .9rem;
+      line-height: 1.5;
+    }
+
+    .metric {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: flex-end;
+    }
+
+    .metric strong {
+      font-size: 1.7rem;
+      letter-spacing: -0.05em;
+      color: #0f172a;
+    }
+
+    .metric span {
+      color: #64748b;
+      font-size: .9rem;
+    }
+
+    .list-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 14px 0;
+      border-top: 1px solid rgba(15,23,42,0.07);
+    }
+
+    .list-row:first-child { border-top: 0; padding-top: 0; }
+
+    .avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      color: white;
+      background: linear-gradient(135deg, #0a84ff, #64d2ff);
+      box-shadow: 0 14px 24px rgba(10,132,255,0.2);
+    }
+
+    .schedule {
+      display: grid;
+      grid-template-columns: 82px 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 12px;
+      border-radius: 18px;
+      background: #f8fbff;
+      border: 1px solid rgba(10,132,255,0.08);
+      margin-top: 10px;
+    }
+
+    .schedule time {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .schedule .meta {
+      color: #64748b;
+      font-size: .9rem;
+    }
+
+    .preview-phone {
+      background: linear-gradient(180deg, #0f172a, #111827);
+      border-radius: 28px;
+      padding: 14px;
+      color: white;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+    }
+
+    .preview-phone .bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: rgba(255,255,255,0.7);
+      font-size: .82rem;
+      margin-bottom: 12px;
+    }
+
+    .chat-bubble {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px;
+      padding: 14px 16px;
+      color: rgba(255,255,255,0.92);
+      line-height: 1.55;
+    }
+
+    .chat-bubble.in {
+      background: linear-gradient(135deg, rgba(10,132,255,0.92), rgba(100,210,255,0.82));
+      margin-left: auto;
+      max-width: 82%;
+    }
+
+    .chat-bubble.out {
+      max-width: 82%;
+    }
+
+    .board-grid {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 18px;
+    }
+
+    .board-box {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 22px;
+      padding: 16px;
+    }
+
+    .task {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 0;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .task:first-child { border-top: 0; padding-top: 0; }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.88);
+      font-size: .84rem;
+    }
+
+    .message-card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.72));
+      color: var(--text);
+      border-radius: 24px;
+      padding: 20px;
+      border: 1px solid rgba(255,255,255,0.8);
+    }
+
+    .message-card .bubble {
+      margin-top: 12px;
+      border-radius: 20px;
+      background: #f2f2f7;
+      padding: 14px 16px;
+      line-height: 1.55;
+      color: #2c2c2e;
+    }
+
+    .section {
+      padding: 34px 0 78px;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 24px;
+      margin-bottom: 22px;
+    }
+
+    .section h2 {
+      margin: 0;
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      letter-spacing: -0.05em;
+      line-height: 1.05;
+    }
+
+    .section .lead {
+      color: var(--muted);
+      max-width: 55ch;
+      line-height: 1.55;
+      margin: 12px 0 0;
+      font-size: 1.05rem;
+    }
+
+    .grid-4, .grid-3, .grid-2 {
+      display: grid;
+      gap: 18px;
+    }
+
+    .grid-4 { grid-template-columns: repeat(4, 1fr); }
+    .grid-3 { grid-template-columns: repeat(3, 1fr); }
+    .grid-2 { grid-template-columns: repeat(2, 1fr); }
+
+    .glass {
+      background: var(--bg-soft);
+      border: 1px solid rgba(255,255,255,0.75);
+      box-shadow: 0 18px 50px rgba(0,0,0,0.08);
+      backdrop-filter: blur(20px);
+      border-radius: var(--radius-xl);
+    }
+
+    .pain-card, .solution-card, .benefit-card, .plan-card, .stat-card {
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .pain-card::after, .solution-card::after, .benefit-card::after, .plan-card::after {
+      content: "";
+      position: absolute;
+      inset: auto -12% -30% auto;
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(10,132,255,0.12), transparent 68%);
+      pointer-events: none;
+    }
+
+    .icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      font-size: 1.25rem;
+      margin-bottom: 18px;
+      background: linear-gradient(135deg, rgba(10,132,255,0.12), rgba(100,210,255,0.18));
+      color: #0a84ff;
+    }
+
+    .card-title {
+      font-size: 1.15rem;
+      margin: 0 0 8px;
+      letter-spacing: -0.03em;
+    }
+
+    .card-text {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .feature strong {
+      display: block;
+      margin-bottom: 4px;
+      letter-spacing: -0.02em;
+      font-size: 1.02rem;
+    }
+
+    .feature .card-text {
+      color: #5c5c63;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .feature-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .feature {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      padding: 18px 18px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.7);
+      border: 1px solid rgba(29,29,31,0.06);
+    }
+
+    .check {
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #34c759, #30d158);
+      color: white;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      box-shadow: 0 8px 18px rgba(52,199,89,0.25);
+    }
+
+    .price {
+      font-size: 2.8rem;
+      line-height: 1;
+      letter-spacing: -0.06em;
+      margin: 10px 0 6px;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: .95rem;
+    }
+
+    .plan-list {
+      display: grid;
+      gap: 10px;
+      margin: 18px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .plan-list li {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 0;
+      border-top: 1px solid rgba(29,29,31,0.07);
+      color: var(--muted);
+      align-items: flex-start;
+    }
+
+    .plan-list li:first-child { border-top: 0; padding-top: 0; }
+
+    .plan-list li span {
+      display: block;
+    }
+
+    .plan-list li strong {
+      display: block;
+      max-width: 30ch;
+      text-align: right;
+      color: #5b6475;
+      font-size: .84rem;
+      line-height: 1.45;
+      font-weight: 500;
+      margin-top: 2px;
+    }
+
+    .plan-list li span:first-child {
+      color: #0f172a;
+      font-weight: 800;
+      font-size: 1rem;
+      letter-spacing: -0.02em;
+    }
+
+    .cta {
+      padding: 12px 0 88px;
+    }
+
+    .cta-box {
+      padding: 42px;
+      border-radius: 40px;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(100,210,255,0.35), transparent 28%),
+        radial-gradient(circle at 80% 20%, rgba(52,199,89,0.20), transparent 28%),
+        linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.72));
+      border: 1px solid rgba(255,255,255,0.82);
+      box-shadow: var(--shadow);
+      text-align: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .cta-box h2 { max-width: 14ch; margin-inline: auto; }
+
+    .cta-box p { max-width: 52ch; margin: 14px auto 0; color: var(--muted); }
+
+    .floating {
+      position: absolute;
+      inset: auto auto 18px 22px;
+      width: 92px;
+      height: 92px;
+      border-radius: 28px;
+      background: linear-gradient(145deg, rgba(10,132,255,0.2), rgba(100,210,255,0.18));
+      filter: blur(.2px);
+      animation: drift 7s ease-in-out infinite;
+    }
+
+    .floating.right {
+      inset: 22px 26px auto auto;
+      width: 118px;
+      height: 118px;
+      animation-delay: -2s;
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(18px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes floatIn {
+      from { opacity: 0; transform: translateY(20px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes drift {
+      0%, 100% { transform: translate3d(0,0,0) scale(1); }
+      50% { transform: translate3d(8px,-10px,0) scale(1.04); }
+    }
+
+    @media (max-width: 980px) {
+      .hero-grid, .split, .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; }
+      .stats-grid, .board-grid, .panel-grid.two, .panel-grid.three, .screen-shell, .showcase-row { grid-template-columns: 1fr; }
+      .hero-foot { grid-template-columns: 1fr; }
+      .section-head { flex-direction: column; align-items: start; }
+      .phone { min-height: auto; }
+      .hero { padding-top: 54px; }
+      .cta-box { padding: 28px 20px; }
+      .topbar .wrap { flex-direction: column; align-items: flex-start; }
+      .nav { justify-content: flex-start; }
+    }
+
+    @media (max-width: 640px) {
+      .wrap { width: min(var(--max), calc(100% - 20px)); }
+      .topbar .wrap { padding: 14px 0; }
+      .hero h1 { max-width: 100%; font-size: clamp(2.5rem, 14vw, 4rem); }
+      .hero p { font-size: 1.02rem; }
+      .btn { width: 100%; }
+      .actions { flex-direction: column; }
+      .hero-card, .pain-card, .solution-card, .benefit-card, .plan-card, .stat-card { padding: 20px; }
+      .phone { padding: 12px; }
+      .calendar { gap: 6px; }
+      .day, .slot { height: 38px; font-size: .8rem; }
+      .screen-tabs { gap: 8px; }
+    }
+  </style>
+</head>
+<body id="top">
+  <header class="topbar">
+    <div class="wrap">
+      <div class="brand">
+        <div class="brand-mark"></div>
+        <div>
+          <div>Sistema de Agendamento</div>
+          <div style="font-size:.85rem;color:var(--muted);font-weight:500;">feito para podologia</div>
+        </div>
+      </div>
+      <nav class="nav" aria-label="Seções principais">
+        <a class="active" href="#hero">Início</a>
+        <a href="#problema">Problema</a>
+        <a href="#solucao">Solução</a>
+        <a href="#telas">Telas</a>
+        <a href="#beneficios">Benefícios</a>
+        <a href="#planos">Planos</a>
+        <a href="#cta">Começar</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" id="hero">
+      <div class="wrap hero-grid">
+        <div>
+          <div class="eyebrow">Plataforma para clínicas de podologia</div>
+          <h1>Venda o seu sistema com a sofisticação que a podologia merece.</h1>
+          <p>Uma página premium para apresentar e comprar o sistema de agendamento da clínica, com aparência profissional, comunicação clara e foco em conversão.</p>
+          <div class="hero-kicker">Apresentação comercial do software de agendamento para podólogas</div>
+          <div class="actions">
+            <a href="#planos" class="btn primary">Quero comprar</a>
+            <a href="#telas" class="btn secondary">Ver demonstração</a>
+          </div>
+          <div class="hero-foot">
+            <div class="mini">
+              <strong>Página de venda</strong>
+              <span>Apresente o sistema como produto premium para podólogas.</span>
+            </div>
+            <div class="mini">
+              <strong>Mais valor percebido</strong>
+              <span>Design elegante que transmite confiança e profissionalismo.</span>
+            </div>
+            <div class="mini">
+              <strong>Venda consultiva</strong>
+              <span>Explique o sistema com clareza e mostre o resultado para a clínica.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-card">
+          <div class="phone">
+            <div class="phone-top">
+              <span class="badge">Apresentação do sistema</span>
+              <span>Visão geral</span>
+            </div>
+
+            <div class="mock-panel">
+              <div class="hero-visual">
+                <svg viewBox="0 0 900 320" xmlns="http://www.w3.org/2000/svg" aria-label="Ilustração de sistema de podologia">
+                  <defs>
+                    <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stop-color="#0a84ff"/>
+                      <stop offset="100%" stop-color="#64d2ff"/>
+                    </linearGradient>
+                    <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stop-color="#e5eefc"/>
+                      <stop offset="100%" stop-color="#ffffff"/>
+                    </linearGradient>
+                  </defs>
+                  <rect width="900" height="320" rx="28" fill="#0f172a"/>
+                  <circle cx="120" cy="84" r="54" fill="url(#g1)" opacity="0.3"/>
+                  <circle cx="764" cy="74" r="88" fill="#34c759" opacity="0.16"/>
+                  <rect x="58" y="56" width="290" height="202" rx="26" fill="url(#g2)" opacity="0.08"/>
+                  <rect x="390" y="52" width="452" height="210" rx="26" fill="#f8fbff" opacity="0.96"/>
+                  <rect x="420" y="84" width="176" height="16" rx="8" fill="#dbe8f8"/>
+                  <rect x="420" y="122" width="278" height="14" rx="7" fill="#edf2f7"/>
+                  <rect x="420" y="146" width="238" height="14" rx="7" fill="#edf2f7"/>
+                  <rect x="420" y="170" width="220" height="14" rx="7" fill="#edf2f7"/>
+                  <rect x="420" y="204" width="118" height="42" rx="18" fill="url(#g1)"/>
+                  <text x="174" y="124" fill="#ffffff" font-size="22" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-weight="700">Podologia</text>
+                  <text x="174" y="158" fill="#c8d8f0" font-size="16" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">Agenda, serviços e pagamentos</text>
+                  <path d="M104 214c18-40 36-50 52-74 18-26 36-27 56-23 26 5 38 23 36 50-2 25-15 49-28 72-9 17-21 31-41 31-25 0-43-13-52-25-10-13-13-20-23-31z" fill="#ffffff" opacity="0.92"/>
+                  <path d="M156 118c24-4 40 10 47 29 7 18 2 42-9 61" fill="none" stroke="#0a84ff" stroke-width="8" stroke-linecap="round"/>
+                  <rect x="746" y="176" width="62" height="62" rx="20" fill="url(#g1)"/>
+                  <text x="776" y="214" text-anchor="middle" fill="#fff" font-size="18" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-weight="700">R$</text>
+                </svg>
+              </div>
+              <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;">
+                <div>
+                  <div style="font-size:1.2rem;font-weight:700;letter-spacing:-.03em;">Sistema de agendamento</div>
+                  <div style="color:rgba(255,255,255,.68);font-size:.92rem;margin-top:4px;">Painel, automação e apresentação comercial</div>
+                </div>
+                <div class="badge">Online 24h</div>
+              </div>
+
+              <div class="calendar" aria-label="Dias da semana">
+                <div class="day">Seg</div><div class="day">Ter</div><div class="day">Qua</div><div class="day">Qui</div><div class="day">Sex</div><div class="day">Sáb</div><div class="day">Dom</div>
+                <div class="slot">08h</div><div class="slot active">09h</div><div class="slot">10h</div><div class="slot">11h</div><div class="slot">14h</div><div class="slot active">15h</div><div class="slot">16h</div>
+              </div>
+
+              <div class="stack">
+                <div class="mini-card">
+                  <div>
+                    <strong>Unha encravada</strong>
+                    <div style="color:rgba(255,255,255,.68);font-size:.88rem;">Serviço de alta demanda com venda facilitada</div>
+                  </div>
+                  <strong>R$ 150</strong>
+                </div>
+                <div class="mini-card">
+                  <div>
+                    <strong>Calosidade</strong>
+                    <div style="color:rgba(255,255,255,.68);font-size:.88rem;">Mais organização para atender e faturar melhor</div>
+                  </div>
+                  <strong>R$ 90</strong>
+                </div>
+                <div class="mini-card">
+                  <div>
+                    <strong>Micose</strong>
+                    <div style="color:rgba(255,255,255,.68);font-size:.88rem;">Seguimento contínuo com agenda mais previsível</div>
+                  </div>
+                  <strong>Online</strong>
+                </div>
+              </div>
+            </div>
+            <div class="showcase-row">
+              <div class="showcase-card">
+                <h3>Página de venda</h3>
+                <p>Mostra o valor do sistema com layout premium, linguagem comercial e foco em decisão de compra.</p>
+              </div>
+              <div class="showcase-card">
+                <h3>Experiência da clínica</h3>
+                <p>Apresenta organização, previsibilidade e uma forma moderna de transformar atendimento em produto digital.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="problema">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <h2>O problema que toda podóloga conhece</h2>
+            <p class="lead">Quando a agenda fica espalhada, o atendimento perde força. O resultado é rotina sobrecarregada, menos previsibilidade e mais chance de perder cliente.</p>
+          </div>
+        </div>
+
+        <div class="grid-4">
+          <div class="glass pain-card">
+            <div class="icon">✦</div>
+            <h3 class="card-title">Agenda bagunçada</h3>
+            <p class="card-text">Horários anotados em vários lugares e dificuldade para saber quem vem, quem faltou e o que está confirmado.</p>
+          </div>
+          <div class="glass pain-card">
+            <div class="icon">⌁</div>
+            <h3 class="card-title">Clientes faltando</h3>
+            <p class="card-text">Sem confirmação automática, o cliente esquece, atrasa ou desmarca em cima da hora.</p>
+          </div>
+          <div class="glass pain-card">
+            <div class="icon">✉</div>
+            <h3 class="card-title">Caos no WhatsApp</h3>
+            <p class="card-text">Mensagens a todo momento pedindo horário, preço, endereço e encaixe. Isso tira tempo do atendimento.</p>
+          </div>
+          <div class="glass pain-card">
+            <div class="icon">◌</div>
+            <h3 class="card-title">Pagamentos desorganizados</h3>
+            <p class="card-text">Sem controle claro de cobrança, fica difícil saber o que foi pago, o que falta e o que já entrou.</p>
+          </div>
+        </div>
+        <div class="stats-grid">
+          <div class="glass stat-card">
+            <div class="stat-label">Atendimento disponível 24 horas</div>
+            <div class="stat-number">Sempre aberto</div>
+            <p class="card-text">Seu agendamento fica acessível o tempo todo, inclusive fora do horário da clínica.</p>
+          </div>
+          <div class="glass stat-card">
+            <div class="stat-label">Divulgação simples</div>
+            <div class="stat-number">Um link só</div>
+            <p class="card-text">Um único endereço para divulgar no Instagram, no WhatsApp e na bio.</p>
+          </div>
+          <div class="glass stat-card">
+            <div class="stat-label">Mais controle para a clínica</div>
+            <div class="stat-number">Menos retrabalho</div>
+            <p class="card-text">Menos mensagens repetidas, menos horários perdidos e muito mais organização.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="solucao">
+      <div class="wrap split">
+        <div class="glass solution-card">
+          <h2>Uma solução simples para a rotina da podologia</h2>
+          <p class="lead">A cliente encontra o serviço, escolhe o horário e agenda sem precisar ficar perguntando tudo no direct. Você ganha uma rotina mais leve e mais profissional.</p>
+          <div class="feature-list" style="margin-top:22px;">
+            <div class="feature">
+              <div class="check">✓</div>
+              <div>
+                <strong>Link exclusivo para agendamento</strong>
+                <span class="card-text">Cada podóloga tem sua página própria para divulgar no Instagram, WhatsApp e bio.</span>
+              </div>
+            </div>
+            <div class="feature">
+              <div class="check">✓</div>
+              <div>
+                <strong>Gestão completa</strong>
+                <span class="card-text">Serviços, horários, retornos, confirmação e organização em um só lugar.</span>
+              </div>
+            </div>
+            <div class="feature">
+              <div class="check">✓</div>
+              <div>
+                <strong>Pagamento online</strong>
+                <span class="card-text">Mais praticidade para o cliente e mais segurança para a clínica.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass solution-card" style="background: linear-gradient(180deg, rgba(10,132,255,0.08), rgba(255,255,255,0.74));">
+          <div class="section-head" style="margin-bottom:14px;">
+            <div>
+              <h2 style="font-size:clamp(1.8rem, 3vw, 2.6rem);">Momentos em que isso faz diferença</h2>
+              <p class="lead">O sistema ajuda no dia a dia e em situações que costumam gerar bagunça.</p>
+            </div>
+          </div>
+          <div class="feature-list">
+            <div class="feature">
+              <div class="check">●</div>
+              <div>
+                <strong>Quando a clínica está cheia</strong>
+                <span class="card-text">A agenda online organiza os horários sem sobrecarregar a recepção.</span>
+              </div>
+            </div>
+            <div class="feature">
+              <div class="check">●</div>
+              <div>
+                <strong>Quando o cliente quer agendar à noite</strong>
+                <span class="card-text">Ele consegue reservar no próprio link, sem esperar resposta.</span>
+              </div>
+            </div>
+            <div class="feature">
+              <div class="check">●</div>
+              <div>
+                <strong>Quando há retorno ou manutenção</strong>
+                <span class="card-text">Fica fácil organizar acompanhamentos para tratamento contínuo.</span>
+              </div>
+            </div>
+            <div class="feature">
+              <div class="check">●</div>
+              <div>
+                <strong>Quando você atende em diferentes áreas da podologia</strong>
+                <span class="card-text">Unha encravada, calosidades, micose, fissuras, atendimento domiciliar e muito mais.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="telas">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <h2>Telas que ajudam a vender o sistema</h2>
+            <p class="lead">Os exemplos abaixo servem para convencer a podóloga de que o sistema é profissional, simples de operar e pronto para gerar mais agendamentos.</p>
+          </div>
+        </div>
+
+        <div class="screen-tabs" role="tablist" aria-label="Exemplos de telas">
+          <button class="screen-tab active" data-target="painel">Painel da podóloga</button>
+          <button class="screen-tab" data-target="cliente">Tela do cliente</button>
+          <button class="screen-tab" data-target="whatsapp">Mensagem WhatsApp</button>
+        </div>
+
+        <div class="screen-panel active" id="painel">
+          <div class="ui-frame">
+            <div class="screen-shell">
+              <aside class="screen-side">
+                <div class="side-brand">
+                  <div class="side-logo">E</div>
+                  <div>
+                    <strong>ELDX Agenda</strong>
+                    <span>Agenda operacional</span>
+                  </div>
+                </div>
+                <div class="side-section">
+                  <div class="side-label">Dashboards</div>
+                  <div class="side-item active">Painel</div>
+                  <div class="side-item">Agenda</div>
+                </div>
+                <div class="side-section">
+                  <div class="side-label">Cadastros</div>
+                  <div class="side-item">Base</div>
+                  <div class="side-item">Tipos de serviço</div>
+                  <div class="side-item">Planos</div>
+                  <div class="side-item">Organizações</div>
+                </div>
+                <div class="side-section">
+                  <div class="side-label">Operação</div>
+                  <div class="side-item">Operação clínica</div>
+                  <div class="side-item">Financeiro</div>
+                  <div class="side-item">Clientes</div>
+                </div>
+                <div class="side-footer">
+                  <div class="side-btn primary">Perfil</div>
+                  <div class="side-btn danger">Sair da conta</div>
+                </div>
+              </aside>
+              <section class="screen-main">
+                <div class="main-top">
+                  <div>
+                    <div class="eyeline">Organização atual</div>
+                    <h3>Painel de atendimento</h3>
+                    <p>Uma visão clara da rotina, com agenda do dia, resumo financeiro e controle dos atendimentos da clínica.</p>
+                  </div>
+                  <div class="action-group">
+                    <div class="mini-action">Painel</div>
+                    <div class="mini-action primary">Editar perfil</div>
+                  </div>
+                </div>
+
+                <div class="panel-grid two">
+                  <div class="white-card">
+                    <h4>Perfil do sistema</h4>
+                    <div class="sub">Informações da conta e dados principais da clínica.</div>
+                    <div class="list-row" style="align-items:center;margin-top:14px;">
+                      <div class="avatar">A</div>
+                      <div style="flex:1;">
+                        <strong style="display:block;font-size:1.05rem;color:#0f172a;">Admin</strong>
+                        <span class="sub">admin@mock.local</span>
+                      </div>
+                    </div>
+                    <div class="panel-grid three" style="margin-top:14px;">
+                      <div class="white-card" style="padding:14px;background:#f8fbff;">
+                        <div class="sub">Nome completo</div>
+                        <h4 style="margin-top:8px;">Admin</h4>
+                      </div>
+                      <div class="white-card" style="padding:14px;background:#f8fbff;">
+                        <div class="sub">E-mail</div>
+                        <h4 style="margin-top:8px;">admin@mock.local</h4>
+                      </div>
+                      <div class="white-card" style="padding:14px;background:#f8fbff;">
+                        <div class="sub">Cidade</div>
+                        <h4 style="margin-top:8px;">Porto</h4>
+                      </div>
+                    </div>
+                    <div class="white-card" style="margin-top:14px;padding:14px;background:#f8fbff;">
+                      <div class="sub">Agenda de hoje</div>
+                      <div class="schedule">
+                        <div><time>09:00</time><div class="meta">Unha encravada</div></div>
+                        <strong style="color:#0f172a;">Ana Paula</strong>
+                      </div>
+                      <div class="schedule">
+                        <div><time>10:30</time><div class="meta">Calosidade</div></div>
+                        <strong style="color:#0f172a;">Mariana</strong>
+                      </div>
+                      <div class="schedule">
+                        <div><time>14:00</time><div class="meta">Retorno</div></div>
+                        <strong style="color:#0f172a;">Helena</strong>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="panel-grid">
+                    <div class="white-card">
+                      <h4>Dados pessoais</h4>
+                      <div class="sub">Informações da podóloga autenticada.</div>
+                      <div class="panel-grid two" style="margin-top:14px;">
+                        <div class="white-card" style="padding:14px;background:#f8fbff;">
+                          <div class="sub">Nome completo</div>
+                          <h4 style="margin-top:8px;">Admin</h4>
+                        </div>
+                        <div class="white-card" style="padding:14px;background:#f8fbff;">
+                          <div class="sub">Telefone</div>
+                          <h4 style="margin-top:8px;">(11) 99999-9999</h4>
+                        </div>
+                        <div class="white-card" style="padding:14px;background:#f8fbff;">
+                          <div class="sub">Nascimento</div>
+                          <h4 style="margin-top:8px;">1990-06-02</h4>
+                        </div>
+                        <div class="white-card" style="padding:14px;background:#f8fbff;">
+                          <div class="sub">Cidade</div>
+                          <h4 style="margin-top:8px;">São Paulo</h4>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="white-card">
+                      <h4>Resumo de operação</h4>
+                      <div class="sub">Tudo o que importa para o dia flui em um só painel.</div>
+                      <div class="panel-grid" style="margin-top:14px;">
+                        <div class="white-card" style="padding:14px;background:#f8fbff;">
+                          <div class="metric"><div><span>Confirmados hoje</span><strong>12</strong></div><span>Agenda ativa</span></div>
+                        </div>
+                        <div class="white-card" style="padding:14px;background:#f8fbff;">
+                          <div class="metric"><div><span>Faturamento do dia</span><strong>R$ 1.480</strong></div><span>Receita</span></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen-panel" id="cliente">
+          <div class="ui-frame">
+            <div class="screen-shell">
+              <aside class="screen-side">
+                <div class="side-brand">
+                  <div class="side-logo">P</div>
+                  <div>
+                    <strong>Agendar com ELDX</strong>
+                    <span>Escolha serviço e horário</span>
+                  </div>
+                </div>
+                <div class="side-section">
+                  <div class="side-label">Etapas</div>
+                  <div class="side-item active">Serviço</div>
+                  <div class="side-item">Profissional</div>
+                  <div class="side-item">Horário</div>
+                  <div class="side-item">Confirmar</div>
+                </div>
+                <div class="side-section">
+                  <div class="side-label">Ajuda</div>
+                  <div class="side-item">Como funciona</div>
+                  <div class="side-item">Perguntas frequentes</div>
+                </div>
+                <div class="side-footer">
+                  <div class="side-btn primary">Continuar</div>
+                </div>
+              </aside>
+              <section class="screen-main">
+                <div class="main-top">
+                  <div>
+                    <div class="eyeline">Agendamento online</div>
+                    <h3>Tela do cliente</h3>
+                    <p>Uma experiência simples para escolher o atendimento, ver disponibilidade e concluir a reserva sem complicação.</p>
+                  </div>
+                  <div class="action-group">
+                    <div class="mini-action">Ver detalhes</div>
+                    <div class="mini-action primary">Confirmar agendamento</div>
+                  </div>
+                </div>
+
+                <div class="panel-grid two">
+                  <div class="white-card">
+                    <h4>Escolha o atendimento</h4>
+                    <div class="sub">Lista clara com serviços, preço e objetivo do atendimento.</div>
+                    <div class="list-row">
+                      <div>
+                        <strong style="display:block;color:#0f172a;">Corte técnico</strong>
+                        <span class="sub">Atendimento com horário reservado</span>
+                      </div>
+                      <strong>R$ 80</strong>
+                    </div>
+                    <div class="list-row">
+                      <div>
+                        <strong style="display:block;color:#0f172a;">Unha encravada</strong>
+                        <span class="sub">Agendamento direcionado para avaliação</span>
+                      </div>
+                      <strong>R$ 150</strong>
+                    </div>
+                    <div class="list-row">
+                      <div>
+                        <strong style="display:block;color:#0f172a;">Micose</strong>
+                        <span class="sub">Atendimento especializado e organizado</span>
+                      </div>
+                      <strong>R$ 120</strong>
+                    </div>
+                    <div class="white-card" style="margin-top:14px;padding:16px;background:#f8fbff;">
+                      <div class="sub">Resumo do agendamento</div>
+                      <div class="metric" style="margin-top:10px;">
+                        <div><span>Serviço escolhido</span><strong>Unha encravada</strong></div>
+                        <span>Selecionado</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="panel-grid">
+                    <div class="white-card">
+                      <h4>Horários disponíveis</h4>
+                      <div class="sub">Slots organizados para facilitar a reserva.</div>
+                      <div class="panel-grid three" style="margin-top:14px;">
+                        <div class="white-card" style="padding:14px;background:#f8fbff;text-align:center;"><strong style="color:#0f172a;">09:00</strong></div>
+                        <div class="white-card" style="padding:14px;background:linear-gradient(135deg,#0a84ff,#1d9fff);color:white;text-align:center;"><strong>10:00</strong></div>
+                        <div class="white-card" style="padding:14px;background:#f8fbff;text-align:center;"><strong style="color:#0f172a;">11:00</strong></div>
+                        <div class="white-card" style="padding:14px;background:#f8fbff;text-align:center;"><strong style="color:#0f172a;">14:00</strong></div>
+                        <div class="white-card" style="padding:14px;background:linear-gradient(135deg,#0a84ff,#1d9fff);color:white;text-align:center;"><strong>15:00</strong></div>
+                        <div class="white-card" style="padding:14px;background:#f8fbff;text-align:center;"><strong style="color:#0f172a;">16:00</strong></div>
+                      </div>
+                    </div>
+                    <div class="white-card">
+                      <h4>Confirmação</h4>
+                      <div class="sub">A cliente finaliza e já recebe retorno da agenda.</div>
+                      <div style="margin-top:14px;" class="white-card">
+                        <div class="metric">
+                          <div><span>Status</span><strong>Reserva pronta</strong></div>
+                          <span>Online</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen-panel" id="whatsapp">
+          <div class="ui-frame">
+            <div class="screen-shell">
+              <aside class="screen-side">
+                <div class="side-brand">
+                  <div class="side-logo">W</div>
+                  <div>
+                    <strong>WhatsApp da clínica</strong>
+                    <span>Mensagem e link pronto</span>
+                  </div>
+                </div>
+                <div class="side-section">
+                  <div class="side-label">Ações</div>
+                  <div class="side-item active">Enviar link</div>
+                  <div class="side-item">Confirmar presença</div>
+                  <div class="side-item">Reagendar</div>
+                </div>
+                <div class="side-section">
+                  <div class="side-label">Status</div>
+                  <div class="side-item">Cliente identificado</div>
+                  <div class="side-item">Horário escolhido</div>
+                  <div class="side-item">Mensagem pronta</div>
+                </div>
+              </aside>
+              <section class="screen-main">
+                <div class="main-top">
+                  <div>
+                    <div class="eyeline">Comunicação automática</div>
+                    <h3>Mensagem WhatsApp</h3>
+                    <p>Uma conversa mais profissional, com texto pronto e um link claro para levar a cliente ao agendamento.</p>
+                  </div>
+                  <div class="action-group">
+                    <div class="mini-action">Copiar texto</div>
+                    <div class="mini-action primary">Enviar link</div>
+                  </div>
+                </div>
+
+                <div class="panel-grid two">
+                  <div class="preview-phone">
+                    <div class="bar">
+                      <span>WhatsApp</span>
+                      <span>Agora</span>
+                    </div>
+                    <div style="display:grid;gap:10px;">
+                      <div class="chat-bubble out">
+                        Olá! Tudo bem? Sua clínica de podologia já deixou o horário disponível para você.
+                      </div>
+                      <div class="chat-bubble in">
+                        Escolha o melhor atendimento no link abaixo e finalize seu agendamento com praticidade.
+                      </div>
+                      <div class="chat-bubble out">
+                        <strong>Link exclusivo:</strong><br>
+                        seudominio.com/agendar/ana-podologia
+                      </div>
+                    </div>
+                  </div>
+                  <div class="panel-grid">
+                    <div class="white-card">
+                      <h4>Texto pronto para envio</h4>
+                      <div class="sub">Mensagem clara, objetiva e profissional para converter o contato em agendamento.</div>
+                      <div class="white-card" style="margin-top:14px;background:#f8fbff;">
+                        <div class="sub" style="font-size:.88rem;margin-bottom:8px;">Modelo</div>
+                        <div style="color:#0f172a;line-height:1.7;">
+                          Olá! Seu agendamento está pronto para avançar. Clique no link abaixo para escolher o melhor horário, confirmar o serviço e finalizar sua reserva com praticidade.
+                        </div>
+                      </div>
+                    </div>
+                    <div class="white-card">
+                      <h4>Vantagens da automação</h4>
+                      <div class="list-row">
+                        <div>
+                          <strong style="display:block;color:#0f172a;">Menos conversa repetida</strong>
+                          <span class="sub">A cliente já recebe o caminho certo.</span>
+                        </div>
+                      </div>
+                      <div class="list-row">
+                        <div>
+                          <strong style="display:block;color:#0f172a;">Mais agendamento concluído</strong>
+                          <span class="sub">O fluxo fica rápido e direto.</span>
+                        </div>
+                      </div>
+                      <div class="list-row">
+                        <div>
+                          <strong style="display:block;color:#0f172a;">Mais profissionalismo</strong>
+                          <span class="sub">A comunicação parece de clínica organizada.</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="beneficios">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <h2>Não venda funcionalidade. Venda tranquilidade.</h2>
+            <p class="lead">O que a podóloga quer é menos confusão, mais agenda preenchida e mais clareza no financeiro. É isso que o sistema entrega, com aparência profissional e fluxo simples.</p>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="glass benefit-card">
+            <div class="icon">✓</div>
+            <h3 class="card-title">Nunca mais perca agendamentos</h3>
+            <p class="card-text">A cliente acessa o link, escolhe o serviço e já deixa tudo reservado sem depender do WhatsApp o tempo todo.</p>
+          </div>
+          <div class="glass benefit-card">
+            <div class="icon">✓</div>
+            <h3 class="card-title">Saiba quanto a clínica faturou</h3>
+            <p class="card-text">Tenha visão clara do que foi agendado, pago e atendido, sem planilha solta ou anotação perdida.</p>
+          </div>
+          <div class="glass benefit-card">
+            <div class="icon">✓</div>
+            <h3 class="card-title">Destaque sua especialidade</h3>
+            <p class="card-text">Mostre que sua clínica atende áreas diferentes da podologia com organização e apresentação profissional.</p>
+          </div>
+          <div class="glass benefit-card">
+            <div class="icon">✓</div>
+            <h3 class="card-title">Gere mais confiança no primeiro clique</h3>
+            <p class="card-text">Uma landing bonita passa mais segurança para quem está escolhendo onde marcar o atendimento.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="planos">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <h2>Planos para comprar o sistema</h2>
+            <p class="lead">Escolha a versão ideal para apresentar a solução para clínicas de podologia com uma imagem mais forte e mais profissional.</p>
+          </div>
+        </div>
+
+        <div class="grid-3">
+          <div class="glass plan-card">
+            <div class="small">Essência Digital</div>
+            <div class="price">R$ 49<span style="font-size:1.1rem;color:var(--muted);">/mês</span></div>
+            <div class="card-text">Essência Digital entrega as bases para começar a vender o sistema com uma apresentação profissional e objetiva.</div>
+            <ul class="plan-list">
+              <li><span>Página de apresentação</span><strong>Mostra a clínica com aparência profissional para gerar mais confiança.</strong></li>
+              <li><span>Link exclusivo da clínica</span><strong>Permite divulgar a página da podóloga no Instagram, WhatsApp e bio.</strong></li>
+              <li><span>Cadastro de serviços</span><strong>Deixa claro o que a clínica atende e facilita a escolha da cliente.</strong></li>
+              <li><span>Agenda organizada</span><strong>Ajuda a visualizar os horários disponíveis com mais facilidade.</strong></li>
+              <li><span>Visual premium</span><strong>Passa uma impressão mais forte e valoriza o serviço da podóloga.</strong></li>
+            </ul>
+          </div>
+
+          <div class="glass plan-card" style="border:1px solid rgba(10,132,255,0.22); box-shadow: 0 24px 70px rgba(10,132,255,0.14);">
+            <div class="small">Clínica Pro</div>
+            <div class="price">R$ 89<span style="font-size:1.1rem;color:var(--muted);">/mês</span></div>
+            <div class="card-text">Clínica Pro + Essência Digital e adiciona recursos para aumentar a conversão e deixar a operação mais profissional.</div>
+            <ul class="plan-list">
+              <li><span>Essência Digital</span><strong>INCLUSO</strong></li>
+              <li><span>Pagamento online</span><strong>Facilita a cobrança e reduz a chance de perder atendimento por falta de pagamento.</strong></li>
+              <li><span>Confirmação automática</span><strong>Ajuda a diminuir esquecimentos e melhora a taxa de comparecimento.</strong></li>
+              <li><span>Resumo financeiro</span><strong>Mostra quanto entrou e deixa o controle do dia mais claro.</strong></li>
+              <li><span>Mais controle de agenda</span><strong>Organiza melhor os horários e deixa a rotina mais previsível.</strong></li>
+            </ul>
+          </div>
+
+          <div class="glass plan-card">
+            <div class="small">Elite Podologia</div>
+            <div class="price">R$ 149<span style="font-size:1.1rem;color:var(--muted);">/mês</span></div>
+            <div class="card-text">Elite Podologia reúne as vantagens de Essência Digital + Clínica Pro e acrescenta uma estrutura mais completa para clínicas que querem vender mais e crescer com consistência.</div>
+            <ul class="plan-list">
+              <li><span>Essência Digital</span><strong>INCLUSO</strong></li>
+              <li><span>Clínica Pro</span><strong>INCLUSO</strong></li>
+              <li><span>Automação avançada</span><strong>Reduz tarefas repetitivas e deixa o processo mais rápido para a equipe.</strong></li>
+              <li><span>Mais de uma profissional</span><strong>Perfeito para clínicas com mais de uma podóloga ou mais de uma agenda.</strong></li>
+              <li><span>Suporte prioritário</span><strong>Atendimento mais rápido para ajustes e dúvidas do dia a dia.</strong></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap">
+        <div class="glass" style="padding:24px;border-radius:32px;">
+          <div class="section-head" style="margin-bottom:12px;">
+            <div>
+              <h2 style="font-size:clamp(1.8rem, 3vw, 2.8rem);">Exemplos práticos de uso no dia a dia</h2>
+              <p class="lead">A clínica pode usar o sistema para retorno, encaixe, atendimento em domicílio, horários fora do expediente e campanhas de divulgação.</p>
+            </div>
+          </div>
+          <div class="grid-3">
+            <div class="feature">
+              <div class="check">✓</div>
+              <div><strong>Retorno programado</strong><span class="card-text">A paciente já sai com o próximo horário encaminhado, com mais previsibilidade para a clínica.</span></div>
+            </div>
+            <div class="feature">
+              <div class="check">✓</div>
+              <div><strong>Atendimento domiciliar</strong><span class="card-text">Mostre essa opção com organização, horário reservado e comunicação profissional.</span></div>
+            </div>
+            <div class="feature">
+              <div class="check">✓</div>
+              <div><strong>Campanha no Instagram</strong><span class="card-text">Use o link na bio e direcione a cliente para agendar em poucos cliques.</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta" id="cta">
+      <div class="wrap">
+        <div class="cta-box">
+          <div class="floating"></div>
+          <div class="floating right"></div>
+          <h2>Pronta para vender seu sistema?</h2>
+          <p>Uma apresentação elegante muda a percepção do produto e ajuda a clínica a enxergar valor antes mesmo da demonstração.</p>
+          <div class="actions" style="justify-content:center;margin-top:26px;">
+            <a href="#top" class="btn primary">Começar agora</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const tabs = Array.from(document.querySelectorAll('.screen-tab'));
+    const panels = Array.from(document.querySelectorAll('.screen-panel'));
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        tabs.forEach((t) => t.classList.remove('active'));
+        panels.forEach((p) => p.classList.remove('active'));
+        tab.classList.add('active');
+        const panel = document.getElementById(tab.dataset.target);
+        if (panel) panel.classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>
